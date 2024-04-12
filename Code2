@@ -1,0 +1,90 @@
+#include <Stepper.h>
+
+// Define stepper motor connections and parameters
+const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution of your motor
+Stepper myStepper(stepsPerRevolution, 8, 9, 10, 11); // define stepper motor connections
+
+// Define medicine slots
+const int numSlots = 16;
+int slotPins[numSlots] = {2, 3, 4, 5, 6, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21};
+
+// Define claw control pins
+const int clawXStepPin = 22;
+const int clawXDirPin = 23;
+const int clawYStepPin = 24;
+const int clawYDirPin = 25;
+
+// Define claw movement parameters
+const int stepsPerXSlot = 100; // Adjust according to your setup
+const int stepsPerYSlot = 100; // Adjust according to your setup
+
+// Initialize variables
+int currentSlot = 0;
+
+void setup() {
+  // Set up stepper motor pins
+  pinMode(clawXStepPin, OUTPUT);
+  pinMode(clawXDirPin, OUTPUT);
+  pinMode(clawYStepPin, OUTPUT);
+  pinMode(clawYDirPin, OUTPUT);
+  
+  // Set up medicine slot pins
+  for (int i = 0; i < numSlots; i++) {
+    pinMode(slotPins[i], OUTPUT);
+  }
+
+  // Set up serial communication
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Dispense medicine based on user input or any other trigger
+  int targetSlot = 0; // Adjust this based on your input mechanism
+  
+  // Move claw to the desired slot
+  moveClawToSlot(targetSlot);
+
+  // Dispense medicine from the slot
+  dispenseMedicine(targetSlot);
+}
+
+void moveClawToSlot(int targetSlot) {
+  // Calculate steps to move in X and Y directions
+  int xSteps = (targetSlot % 4) * stepsPerXSlot; // Adjust according to your setup
+  int ySteps = (targetSlot / 4) * stepsPerYSlot; // Adjust according to your setup
+  
+  // Move in X direction
+  if (xSteps < 0) {
+    digitalWrite(clawXDirPin, LOW); // Set direction to clockwise
+    xSteps = -xSteps; // Make steps positive
+  } else {
+    digitalWrite(clawXDirPin, HIGH); // Set direction to counterclockwise
+  }
+  for (int i = 0; i < xSteps; i++) {
+    digitalWrite(clawXStepPin, HIGH);
+    delayMicroseconds(1000); // Adjust delay for desired speed
+    digitalWrite(clawXStepPin, LOW);
+    delayMicroseconds(1000); // Adjust delay for desired speed
+  }
+
+  // Move in Y direction
+  if (ySteps < 0) {
+    digitalWrite(clawYDirPin, LOW); // Set direction to clockwise
+    ySteps = -ySteps; // Make steps positive
+  } else {
+    digitalWrite(clawYDirPin, HIGH); // Set direction to counterclockwise
+  }
+  for (int i = 0; i < ySteps; i++) {
+    digitalWrite(clawYStepPin, HIGH);
+    delayMicroseconds(1000); // Adjust delay for desired speed
+    digitalWrite(clawYStepPin, LOW);
+    delayMicroseconds(1000); // Adjust delay for desired speed
+  }
+}
+
+void dispenseMedicine(int targetSlot) {
+  // Turn on the corresponding slot pin to dispense medicine
+  digitalWrite(slotPins[targetSlot], HIGH);
+  delay(1000); // Adjust delay for dispensing time
+  digitalWrite(slotPins[targetSlot], LOW);
+}
